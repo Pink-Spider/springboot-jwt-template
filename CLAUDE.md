@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `main`: Spring Boot 4.1.1 / Java 25 / Gradle 9.8.2.
 - `spring-boot-3x`: the original Spring Boot 3.0.2 / Java 17 / Gradle 7.6.1 implementation (jjwt 0.9.1). Gradle 7.6 cannot run on JDK 20+, so build that branch with `JAVA_HOME` pointing at JDK 17–19.
 
-The package `io.pinkspider.springboot3jwttemplate` and project name `springboot3_jwt_template` still carry the "3" on `main`; they were not renamed during the Boot 4 migration.
+On `main` the base package is `io.pinkspider.springbootjwttemplate`. `spring-boot-3x` still uses the old `io.pinkspider.springboot3jwttemplate`. The project name (`springboot3_jwt_template`) and the main/test class names (`Springboot3JwtTemplateApplication*`) still carry the "3".
 
 ## Commands
 

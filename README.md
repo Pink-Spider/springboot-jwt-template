@@ -150,10 +150,8 @@ curl -i -b cookies.txt -c cookies.txt -X DELETE localhost:8080/api/token   # 로
 
 ## 프로젝트 구조
 
-패키지명(`springboot3jwttemplate`)은 Boot 3 시절의 이름을 그대로 유지하고 있습니다.
-
 ```
-src/main/java/io/pinkspider/springboot3jwttemplate/global
+src/main/java/io/pinkspider/springbootjwttemplate/global
 ├── config        # WebSecurityConfig, TokenAuthenticationFilter, GlobalExceptionHandler
 │   └── jwt       # JwtProperties, TokenProvider, TokenCookies
 ├── controller    # UserApiController, TokenApiController
