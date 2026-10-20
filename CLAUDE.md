@@ -32,12 +32,10 @@ Everything lives under `global/` (config, controller, domain, dto, repository, s
 - **Token creation/validation:** `TokenProvider` uses jjwt 0.13 and signs HS256 with `JwtProperties.signingKey()`. The key is the UTF-8 bytes of `jwt.secret_key` and must be at least 32 bytes. `JwtFactory` (test sources) builds arbitrary tokens for tests and must stay in sync with how `TokenProvider` signs.
 - **Refresh flow:** `POST /api/token` → `TokenService.createNewAccessToken` validates the refresh token signature, looks it up in `RefreshToken` (one row per user, `user_id` unique), loads the `User`, and issues a 2-hour access token. The token's `sub` is the user's email and the `id` claim is the user id.
 - **Users:** `User` is the JPA entity (table `users`) and implements `UserDetails` directly. `UserDetailService` loads by email. `UserService` stores BCrypt-encoded passwords.
-- **Security:** `WebSecurityConfig` permits `/login`, `/signup`, `/user` and requires auth elsewhere. It ignores the H2 console and `/static/**`, and exposes a `ProviderManager`/`DaoAuthenticationProvider` `AuthenticationManager`.
+- **Security:** `WebSecurityConfig` is a stateless API chain. CSRF, sessions, form login, HTTP Basic, and logout are disabled. `TokenAuthenticationFilter` runs before `UsernamePasswordAuthenticationFilter`, reads `Authorization: Bearer …`, and sets the `SecurityContext` via `TokenProvider.getAuthentication` (principal = email, `ROLE_USER`). `/login`, `/signup`, `/user`, `/api/token` are permitted. Everything else requires auth, and unauthenticated requests get `401` (`HttpStatusEntryPoint`). The H2 console and `/static/**` bypass security entirely. An `AuthenticationManager` (`ProviderManager` + `DaoAuthenticationProvider`) is exposed for a future login endpoint.
+- **Tests** use `@SpringBootTest` + `@AutoConfigureMockMvc` + `@ActiveProfiles("local")`, so `MockMvc` runs through the real security filter chain. `TokenAuthenticationFilterTest` hits an unmapped protected path: `404` means authentication passed, `401` means it failed.
 
-Known gaps inherited from the Boot 3 implementation (behavior was kept the same during migration):
-- `TokenAuthenticationFilter` (reads `Authorization: Bearer …`) exists but is **not registered** in the `SecurityFilterChain`, so bearer tokens do not authenticate requests yet.
-- `/api/token` is not in the permit list and CSRF is enabled. `TokenApiControllerTest` passes only because it rebuilds `MockMvc` without `springSecurity()`, which bypasses the security filters.
-- `/signup` and `/user` are permitted, but no controller exists for them yet.
+Not implemented yet: `/signup`, `/login`, `/user` are permitted, but no controller exists for them.
 
 ## Boot 4 specifics
 

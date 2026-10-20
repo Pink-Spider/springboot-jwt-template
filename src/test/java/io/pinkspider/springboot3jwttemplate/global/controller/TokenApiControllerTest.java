@@ -17,13 +17,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -40,9 +37,6 @@ class TokenApiControllerTest {
     protected ObjectMapper objectMapper;
 
     @Autowired
-    private WebApplicationContext context;
-
-    @Autowired
     JwtProperties jwtProperties;
 
     @Autowired
@@ -52,9 +46,8 @@ class TokenApiControllerTest {
     RefreshTokenRepository refreshTokenRepository;
 
     @BeforeEach
-    public void mockMvcSetUp() {
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(context)
-                .build();
+    public void setUp() {
+        refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
 

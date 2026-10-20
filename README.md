@@ -42,6 +42,16 @@ jwt:
   secret_key: <HMAC 서명 키, UTF-8 기준 32바이트 이상>
 ```
 
+## 인증
+
+`/login`, `/signup`, `/user`, `/api/token` 을 제외한 모든 요청은 Access Token이 필요합니다.
+
+```
+Authorization: Bearer <access token>
+```
+
+토큰이 없거나 만료·위조된 경우 `401 Unauthorized` 를 반환합니다. 세션과 CSRF는 사용하지 않습니다(stateless).
+
 ## API
 
 ### `POST /api/token` — Refresh Token으로 새 Access Token 발급
@@ -77,9 +87,7 @@ src/main/java/io/pinkspider/springboot3jwttemplate/global
 
 ## TODO
 
-- `TokenAuthenticationFilter`를 `SecurityFilterChain`에 등록 (현재는 Bearer 토큰으로 인증되지 않음)
-- `/api/token` 허용 및 CSRF 설정 정리
-- 회원가입 / 로그인 API
+- 회원가입 / 로그인 API (`/signup`, `/login`은 허용 경로로 열려 있으나 컨트롤러 미구현)
 
 ## 라이선스
 
