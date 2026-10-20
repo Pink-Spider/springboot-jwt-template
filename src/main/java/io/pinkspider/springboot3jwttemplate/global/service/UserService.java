@@ -14,6 +14,10 @@ public class UserService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public Long save(AddUserRequest dto) {
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new IllegalArgumentException("Duplicated email");
+        }
+
         return userRepository.save(User.builder()
                 .email(dto.getEmail())
                 .auth(dto.getAuth())

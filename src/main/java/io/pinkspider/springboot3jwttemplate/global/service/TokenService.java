@@ -3,6 +3,7 @@ package io.pinkspider.springboot3jwttemplate.global.service;
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.TokenProvider;
 import io.pinkspider.springboot3jwttemplate.global.domain.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -11,19 +12,34 @@ import java.time.Duration;
 @Service
 public class TokenService {
 
+    public static final Duration ACCESS_TOKEN_DURATION = Duration.ofHours(2);
+    public static final Duration REFRESH_TOKEN_DURATION = Duration.ofDays(14);
+
     private final TokenProvider tokenProvider;
     private final RefreshTokenService refreshTokenService;
     private final UserService userService;
 
+    public String createAccessToken(User user) {
+        return tokenProvider.generateToken(user, ACCESS_TOKEN_DURATION);
+    }
+
+    // 사용자당 refresh token 은 하나만 유지한다. 다시 로그인하면 이전 토큰은 무효가 된다.
+    public String createRefreshToken(User user) {
+        String refreshToken = tokenProvider.generateToken(user, REFRESH_TOKEN_DURATION);
+        refreshTokenService.saveOrUpdate(user.getId(), refreshToken);
+
+        return refreshToken;
+    }
+
     public String createNewAccessToken(String refreshToken) {
         // 토큰 유효성 검사에 실패하면 예외 발생
         if(!tokenProvider.validToken(refreshToken)) {
-            throw new IllegalArgumentException("Unexpected token");
+            throw new BadCredentialsException("Unexpected token");
         }
 
         Long userId = refreshTokenService.findByRefreshToken(refreshToken).getUserId();
         User user = userService.findById(userId);
 
-        return tokenProvider.generateToken(user, Duration.ofHours(2));
+        return createAccessToken(user);
     }
 }

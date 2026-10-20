@@ -2,6 +2,8 @@ package io.pinkspider.springboot3jwttemplate.global.config;
 
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.JwtFactory;
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.JwtProperties;
+import io.pinkspider.springboot3jwttemplate.global.config.jwt.TokenCookies;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +45,15 @@ class TokenAuthenticationFilterTest {
         String token = JwtFactory.withDefaultValues().createToken(jwtProperties);
 
         mockMvc.perform(get(PROTECTED_URL).header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound());
+    }
+
+    @DisplayName("유효한 access token 쿠키면 인증을 통과한다.")
+    @Test
+    void withValidTokenCookie() throws Exception {
+        String token = JwtFactory.withDefaultValues().createToken(jwtProperties);
+
+        mockMvc.perform(get(PROTECTED_URL).cookie(new Cookie(TokenCookies.ACCESS_TOKEN, token)))
                 .andExpect(status().isNotFound());
     }
 

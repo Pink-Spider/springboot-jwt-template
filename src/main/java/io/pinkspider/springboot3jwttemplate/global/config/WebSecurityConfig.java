@@ -2,6 +2,7 @@ package io.pinkspider.springboot3jwttemplate.global.config;
 
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.TokenProvider;
 import io.pinkspider.springboot3jwttemplate.global.service.UserDetailService;
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -40,7 +41,10 @@ public class WebSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(new TokenAuthenticationFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/signup", "/user", "/api/token").permitAll()
+                        // 에러 포워드(/error)는 원래 요청의 인증 결과를 따르도록 다시 막지 않는다.
+                        // (stateless 라서 ERROR 디스패치에는 인증 정보가 남아 있지 않다)
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                        .requestMatchers("/login", "/signup", "/api/token").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
