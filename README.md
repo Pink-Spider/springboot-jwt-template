@@ -80,3 +80,7 @@ src/main/java/io/pinkspider/springboot3jwttemplate/global
 - `TokenAuthenticationFilter`를 `SecurityFilterChain`에 등록 (현재는 Bearer 토큰으로 인증되지 않음)
 - `/api/token` 허용 및 CSRF 설정 정리
 - 회원가입 / 로그인 API
+
+## 라이선스
+
+[MIT License](LICENSE) © 2023 pink-spider
