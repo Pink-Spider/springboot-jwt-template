@@ -1,20 +1,34 @@
-# springboot3_jwt_template
+# Spring Boot 4 JWT Template
 
-Spring Boot 4 기반 JWT 인증 템플릿 프로젝트입니다. 회원가입·로그인·로그아웃과 Access Token / Refresh Token 발급·검증을 HttpOnly 쿠키 기반으로 구현합니다.
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?logo=springboot&logoColor=white)
+![Java](https://img.shields.io/badge/Java-25-ED8B00?logo=openjdk&logoColor=white)
+![Gradle](https://img.shields.io/badge/Gradle-9.8.2-02303A?logo=gradle&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-blue)
+
+Spring Boot 4 / Spring Security 7 기반의 JWT 인증 템플릿입니다. 회원가입·로그인·로그아웃과 Access Token / Refresh Token 발급·재발급을 **HttpOnly 쿠키** 기반으로 구현했습니다.
+
+> Spring Boot 3 버전은 [`spring-boot-3x`](https://github.com/Pink-Spider/springboot-jwt-template/tree/spring-boot-3x) 브랜치에 있습니다.
+
+## 기술 스택
+
+| 구분 | 사용 기술 |
+| --- | --- |
+| Language | Java 25 |
+| Framework | Spring Boot 4.1.1 (Spring Framework 7.0) |
+| Web | Spring Web MVC, Tomcat 11 |
+| Security | Spring Security 7.1, jjwt 0.13.0 (HS256) |
+| Data | Spring Data JPA 4.1, Hibernate 7.4, H2 (in-memory) |
+| JSON | Jackson 3 |
+| Validation | Jakarta Bean Validation |
+| Build | Gradle 9.8.2 (Java toolchain + foojay resolver) |
+| 기타 | Lombok |
 
 ## 브랜치
 
-| 브랜치 | Spring Boot | Java | Gradle | jjwt |
-| --- | --- | --- | --- | --- |
-| `main` | 4.1.1 | 25 | 9.8.2 | 0.13.0 |
-| `spring-boot-3x` | 3.0.2 | 17 | 7.6.1 | 0.9.1 |
-
-## 기술 스택 (main)
-
-- Spring Web MVC, Spring Security 7, Spring Data JPA (Hibernate 7)
-- H2 (in-memory)
-- jjwt 0.13.0 (HS256)
-- Lombok
+| 브랜치 | Spring Boot | Java | Gradle | jjwt | 내용 |
+| --- | --- | --- | --- | --- | --- |
+| `main` | 4.1.1 | 25 | 9.8.2 | 0.13.0 | 회원가입·로그인·로그아웃, HttpOnly 쿠키, 요청 값 검증 |
+| `spring-boot-3x` | 3.0.2 | 17 | 7.6.1 | 0.9.1 | 이전 구현 (Access Token 재발급 API만, 토큰을 응답 본문으로 반환) |
 
 ## 요구 사항
 
@@ -136,6 +150,8 @@ curl -i -b cookies.txt -c cookies.txt -X DELETE localhost:8080/api/token   # 로
 
 ## 프로젝트 구조
 
+패키지명(`springboot3jwttemplate`)은 Boot 3 시절의 이름을 그대로 유지하고 있습니다.
+
 ```
 src/main/java/io/pinkspider/springboot3jwttemplate/global
 ├── config        # WebSecurityConfig, TokenAuthenticationFilter, GlobalExceptionHandler
@@ -146,6 +162,22 @@ src/main/java/io/pinkspider/springboot3jwttemplate/global
 ├── repository
 └── service       # TokenService, RefreshTokenService, UserService, UserDetailService
 ```
+
+## Spring Boot 3 → 4 주요 변경 사항
+
+`spring-boot-3x` 브랜치에서 마이그레이션하며 적용한 내용입니다.
+
+| 영역 | Boot 3 | Boot 4 |
+| --- | --- | --- |
+| 스타터 | `spring-boot-starter-web` | `spring-boot-starter-webmvc` (기능별 모듈 분리) |
+| H2 콘솔 | 자동 포함 | `spring-boot-h2console` 모듈 추가 필요 |
+| 테스트 스타터 | `spring-boot-starter-test`, `spring-security-test` | `spring-boot-starter-webmvc-test`, `-security-test`, `-data-jpa-test` |
+| 패키지 이동 | `o.s.boot.autoconfigure.security.servlet.PathRequest`<br>`o.s.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc` | `o.s.boot.security.autoconfigure.web.servlet.PathRequest`<br>`o.s.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc` |
+| Jackson | 2 (`com.fasterxml.jackson`) | 3 (`tools.jackson`) |
+| Security DSL | `authorizeRequests()`, `.and()` | lambda DSL만 지원 (`authorizeHttpRequests(...)`) |
+| AuthenticationManager | `AuthenticationManagerBuilder` + `.and()` | `ProviderManager` + `DaoAuthenticationProvider(userDetailsService)` |
+| jjwt | 0.9.1 (`String` 키, `jaxb-api` 필요) | 0.13.0 (`SecretKey`, `verifyWith` / `parseSignedClaims`) |
+| Gradle | 7.6.1 | 9.x (`junit-platform-launcher` 명시 필요) |
 
 ## 라이선스
 
