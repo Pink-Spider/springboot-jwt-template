@@ -1,4 +1,4 @@
-# Spring Boot 4 JWT Template
+# Spring Boot JWT template
 
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?logo=springboot&logoColor=white)
 ![Java](https://img.shields.io/badge/Java-25-ED8B00?logo=openjdk&logoColor=white)
