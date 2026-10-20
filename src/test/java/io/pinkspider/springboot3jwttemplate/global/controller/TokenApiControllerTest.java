@@ -3,6 +3,7 @@ package io.pinkspider.springboot3jwttemplate.global.controller;
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.JwtFactory;
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.JwtProperties;
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.TokenCookies;
+import io.pinkspider.springboot3jwttemplate.global.config.jwt.TokenType;
 import io.pinkspider.springboot3jwttemplate.global.domain.RefreshToken;
 import io.pinkspider.springboot3jwttemplate.global.domain.User;
 import io.pinkspider.springboot3jwttemplate.global.repository.RefreshTokenRepository;
@@ -60,6 +61,7 @@ class TokenApiControllerTest {
 
         String refreshToken = JwtFactory.builder()
                 .claims(Map.of("id", testUser.getId()))
+                .tokenType(TokenType.REFRESH)
                 .build()
                 .createToken(jwtProperties);
 
@@ -89,10 +91,36 @@ class TokenApiControllerTest {
     @DisplayName("createNewAccessToken: 저장되지 않은 refresh token 이면 401을 반환한다.")
     @Test
     public void createNewAccessToken_unknownToken() throws Exception {
-        String refreshToken = JwtFactory.withDefaultValues().createToken(jwtProperties);
+        String refreshToken = JwtFactory.builder()
+                .tokenType(TokenType.REFRESH)
+                .build()
+                .createToken(jwtProperties);
 
         mockMvc.perform(post("/api/token")
                         .cookie(new Cookie(TokenCookies.REFRESH_TOKEN, refreshToken)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @DisplayName("createNewAccessToken: access token 으로는 재발급할 수 없다.")
+    @Test
+    public void createNewAccessToken_withAccessToken() throws Exception {
+        // given: DB 에 저장돼 있어도 token_type 이 access 면 거부해야 한다.
+        User testUser = userRepository.save(User.builder()
+                .email("user@gmail.com")
+                .password("test")
+                .build());
+
+        String accessToken = JwtFactory.builder()
+                .claims(Map.of("id", testUser.getId()))
+                .tokenType(TokenType.ACCESS)
+                .build()
+                .createToken(jwtProperties);
+
+        refreshTokenRepository.save(new RefreshToken(testUser.getId(), accessToken));
+
+        // when & then
+        mockMvc.perform(post("/api/token")
+                        .cookie(new Cookie(TokenCookies.REFRESH_TOKEN, accessToken)))
                 .andExpect(status().isUnauthorized());
     }
 }

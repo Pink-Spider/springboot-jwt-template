@@ -20,12 +20,12 @@ public class TokenProvider {
 
     private final JwtProperties jwtProperties;
 
-    public String generateToken(User user, Duration expiredAt) {
+    public String generateToken(User user, Duration expiredAt, TokenType tokenType) {
         Date now = new Date();
-        return makeToken(new Date(now.getTime() + expiredAt.toMillis()), user);
+        return makeToken(new Date(now.getTime() + expiredAt.toMillis()), user, tokenType);
     }
 
-    private String makeToken(Date expiry, User user) {
+    private String makeToken(Date expiry, User user, TokenType tokenType) {
         Date now = new Date();
 
         return Jwts.builder()
@@ -35,18 +35,17 @@ public class TokenProvider {
                 .expiration(expiry)
                 .subject(user.getEmail())
                 .claim("id", user.getId())
+                .claim(TokenType.CLAIM_NAME, tokenType.getValue())
                 .signWith(jwtProperties.signingKey(), Jwts.SIG.HS256)
                 .compact();
     }
 
-    public boolean validToken(String token) {
+    // 서명·만료뿐 아니라 토큰 용도(token_type)까지 일치해야 유효하다.
+    public boolean validToken(String token, TokenType tokenType) {
         try {
-            Jwts.parser()
-                    .verifyWith(jwtProperties.signingKey())
-                    .build()
-                    .parseSignedClaims(token);
+            Claims claims = getClaims(token);
 
-            return true;
+            return tokenType.getValue().equals(claims.get(TokenType.CLAIM_NAME, String.class));
         } catch (Exception e) {
             return false;
         }

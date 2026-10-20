@@ -2,6 +2,7 @@ package io.pinkspider.springboot3jwttemplate.global.config;
 
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.TokenCookies;
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.TokenProvider;
+import io.pinkspider.springboot3jwttemplate.global.config.jwt.TokenType;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -30,7 +31,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
         String token = getAccessToken(request);
 
-        if (tokenProvider.validToken(token)) {
+        if (tokenProvider.validToken(token, TokenType.ACCESS)) {
             Authentication authentication = tokenProvider.getAuthentication(token);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }

@@ -21,13 +21,16 @@ public class JwtFactory {
 
     private Map<String, Object> claims = emptyMap();
 
+    private TokenType tokenType = TokenType.ACCESS;
+
     @Builder
     public JwtFactory(String subject, Date issuedAt, Date expiration,
-                      Map<String, Object> claims) {
+                      Map<String, Object> claims, TokenType tokenType) {
         this.subject = subject != null ? subject : this.subject;
         this.issuedAt = issuedAt != null ? issuedAt : this.issuedAt;
         this.expiration = expiration != null ? expiration : this.expiration;
         this.claims = claims != null ? claims : this.claims;
+        this.tokenType = tokenType != null ? tokenType : this.tokenType;
     }
 
     public static JwtFactory withDefaultValues() {
@@ -42,6 +45,7 @@ public class JwtFactory {
                 .issuedAt(issuedAt)
                 .expiration(expiration)
                 .claims(claims)
+                .claim(TokenType.CLAIM_NAME, tokenType.getValue())
                 .signWith(jwtProperties.signingKey(), Jwts.SIG.HS256)
                 .compact();
     }

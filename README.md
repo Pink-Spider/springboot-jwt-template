@@ -53,6 +53,7 @@ jwt:
 
 - `/login`, `/signup`, `/api/token` 을 제외한 모든 요청은 Access Token이 필요합니다. 브라우저는 `access_token` 쿠키를 자동으로 보내고, 쿠키를 쓸 수 없는 클라이언트는 `Authorization: Bearer <access token>` 헤더를 사용할 수 있습니다(헤더 우선).
 - `refresh_token` 쿠키는 Path가 `/api/token` 이라 재발급 요청에만 전송됩니다.
+- 두 토큰은 `token_type` claim(`access` / `refresh`)으로 구분됩니다. Refresh Token으로는 API를 인증할 수 없고, Access Token으로는 재발급할 수 없습니다.
 - 세션은 사용하지 않습니다(stateless). CSRF 토큰 대신 `SameSite=Lax` 로 cross-site 요청에 쿠키가 실리지 않게 막습니다.
 - `Secure` 쿠키이므로 브라우저는 HTTPS(또는 `localhost`)에서만 쿠키를 저장·전송합니다.
 - 인증 실패는 `401`, 잘못된 입력은 `400` 을 [Problem Details](https://www.rfc-editor.org/rfc/rfc9457) 형식으로 반환합니다.
@@ -120,7 +121,6 @@ src/main/java/io/pinkspider/springboot3jwttemplate/global
 
 - 로그아웃 API: HttpOnly 쿠키는 클라이언트에서 지울 수 없으므로 서버가 쿠키 만료와 Refresh Token 삭제를 해줘야 합니다.
 - 요청 값 검증(`spring-boot-starter-validation`): 이메일 형식, 비밀번호 길이 등
-- Access / Refresh Token 구분: 지금은 두 토큰의 형식이 같아서 Refresh Token을 `Authorization` 헤더에 넣으면 Access Token처럼 동작합니다.
 
 ## 라이선스
 

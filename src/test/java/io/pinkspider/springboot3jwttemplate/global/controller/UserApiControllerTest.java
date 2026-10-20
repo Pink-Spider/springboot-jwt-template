@@ -2,6 +2,7 @@ package io.pinkspider.springboot3jwttemplate.global.controller;
 
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.TokenCookies;
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.TokenProvider;
+import io.pinkspider.springboot3jwttemplate.global.config.jwt.TokenType;
 import io.pinkspider.springboot3jwttemplate.global.domain.User;
 import io.pinkspider.springboot3jwttemplate.global.repository.RefreshTokenRepository;
 import io.pinkspider.springboot3jwttemplate.global.repository.UserRepository;
@@ -112,6 +113,8 @@ class UserApiControllerTest {
         Cookie refreshToken = result.getResponse().getCookie(TokenCookies.REFRESH_TOKEN);
 
         assertThat(tokenProvider.getUserId(accessToken.getValue())).isEqualTo(user.getId());
+        assertThat(tokenProvider.validToken(accessToken.getValue(), TokenType.ACCESS)).isTrue();
+        assertThat(tokenProvider.validToken(refreshToken.getValue(), TokenType.REFRESH)).isTrue();
         assertThat(refreshTokenRepository.findByUserId(user.getId()).orElseThrow().getRefreshToken())
                 .isEqualTo(refreshToken.getValue());
     }

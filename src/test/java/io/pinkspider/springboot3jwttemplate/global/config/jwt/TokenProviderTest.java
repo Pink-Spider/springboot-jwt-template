@@ -41,7 +41,7 @@ class TokenProviderTest {
                 .build());
 
         // when
-        String token = tokenProvider.generateToken(testUser, Duration.ofDays(14));
+        String token = tokenProvider.generateToken(testUser, Duration.ofDays(14), TokenType.ACCESS);
 
         // then
         Long userId = Jwts.parser()
@@ -64,10 +64,39 @@ class TokenProviderTest {
                 .createToken(jwtProperties);
 
         // when
-        boolean result = tokenProvider.validToken(token);
+        boolean result = tokenProvider.validToken(token, TokenType.ACCESS);
 
         // then
         assertThat(result).isFalse();
+    }
+
+    @DisplayName("validToken(): 토큰 용도(token_type)가 다르면 유효성 검증에 실패한다.")
+    @Test
+    void validToken_wrongTokenType() {
+        // given
+        String refreshToken = JwtFactory.builder()
+                .tokenType(TokenType.REFRESH)
+                .build()
+                .createToken(jwtProperties);
+
+        // when & then
+        assertThat(tokenProvider.validToken(refreshToken, TokenType.ACCESS)).isFalse();
+        assertThat(tokenProvider.validToken(refreshToken, TokenType.REFRESH)).isTrue();
+    }
+
+    @DisplayName("validToken(): token_type 이 없는 토큰은 유효성 검증에 실패한다.")
+    @Test
+    void validToken_withoutTokenType() {
+        // given
+        String token = Jwts.builder()
+                .subject("user@email.com")
+                .expiration(new Date(new Date().getTime() + Duration.ofDays(1).toMillis()))
+                .signWith(jwtProperties.signingKey(), Jwts.SIG.HS256)
+                .compact();
+
+        // when & then
+        assertThat(tokenProvider.validToken(token, TokenType.ACCESS)).isFalse();
+        assertThat(tokenProvider.validToken(token, TokenType.REFRESH)).isFalse();
     }
 
     @DisplayName("validToken(): 유효한 토큰인 경우에 유효성 검증에 성공한다.")
@@ -78,7 +107,7 @@ class TokenProviderTest {
                 .createToken(jwtProperties);
 
         // when
-        boolean result = tokenProvider.validToken(token);
+        boolean result = tokenProvider.validToken(token, TokenType.ACCESS);
 
         // then
         assertThat(result).isTrue();

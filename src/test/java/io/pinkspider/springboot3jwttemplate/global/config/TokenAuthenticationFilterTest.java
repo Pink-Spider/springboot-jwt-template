@@ -3,6 +3,7 @@ package io.pinkspider.springboot3jwttemplate.global.config;
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.JwtFactory;
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.JwtProperties;
 import io.pinkspider.springboot3jwttemplate.global.config.jwt.TokenCookies;
+import io.pinkspider.springboot3jwttemplate.global.config.jwt.TokenType;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -66,6 +67,20 @@ class TokenAuthenticationFilterTest {
                 .createToken(jwtProperties);
 
         mockMvc.perform(get(PROTECTED_URL).header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @DisplayName("refresh token 으로는 인증할 수 없다.")
+    @Test
+    void withRefreshToken() throws Exception {
+        String refreshToken = JwtFactory.builder()
+                .tokenType(TokenType.REFRESH)
+                .build()
+                .createToken(jwtProperties);
+
+        mockMvc.perform(get(PROTECTED_URL).header("Authorization", "Bearer " + refreshToken))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get(PROTECTED_URL).cookie(new Cookie(TokenCookies.ACCESS_TOKEN, refreshToken)))
                 .andExpect(status().isUnauthorized());
     }
 
