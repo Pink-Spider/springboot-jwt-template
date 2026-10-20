@@ -56,7 +56,7 @@ jwt:
 - 두 토큰은 `token_type` claim(`access` / `refresh`)으로 구분됩니다. Refresh Token으로는 API를 인증할 수 없고, Access Token으로는 재발급할 수 없습니다.
 - 세션은 사용하지 않습니다(stateless). CSRF 토큰 대신 `SameSite=Lax` 로 cross-site 요청에 쿠키가 실리지 않게 막습니다.
 - `Secure` 쿠키이므로 브라우저는 HTTPS(또는 `localhost`)에서만 쿠키를 저장·전송합니다.
-- 인증 실패는 `401`, 잘못된 입력은 `400` 을 [Problem Details](https://www.rfc-editor.org/rfc/rfc9457) 형식으로 반환합니다.
+- 인증 실패는 `401`, 잘못된 입력(검증 실패, JSON 형식 오류)은 `400` 을 [Problem Details](https://www.rfc-editor.org/rfc/rfc9457) 형식으로 반환합니다.
 
 ## API
 
@@ -64,20 +64,40 @@ jwt:
 
 ```json
 // Request
-{ "email": "user@example.com", "password": "password" }
+{ "email": "user@example.com", "password": "password1234" }
 ```
 
+| 필드 | 규칙 |
+| --- | --- |
+| `email` | 필수, 이메일 형식 |
+| `password` | 필수, 8~72자 (BCrypt 제한으로 UTF-8 72바이트 이하) |
+
 - `201 Created`
-- `400 Bad Request`: 이미 가입된 이메일
+- `400 Bad Request`: 검증 실패, 이미 가입된 이메일
+
+검증 실패 시 필드별 메시지를 `errors` 로 반환합니다.
+
+```json
+{
+  "status": 400,
+  "title": "Bad Request",
+  "detail": "Invalid request",
+  "errors": {
+    "email": "must be a well-formed email address",
+    "password": "size must be between 8 and 72"
+  }
+}
+```
 
 ### `POST /login` — 로그인
 
 ```json
 // Request
-{ "email": "user@example.com", "password": "password" }
+{ "email": "user@example.com", "password": "password1234" }
 ```
 
 - `204 No Content` + `Set-Cookie: access_token=…`, `Set-Cookie: refresh_token=…`
+- `400 Bad Request`: `email` 또는 `password` 가 비어 있음 (형식·길이 정책은 회원가입에서만 검사)
 - `401 Unauthorized`: 이메일 또는 비밀번호 불일치
 - 사용자당 Refresh Token은 하나만 유지되며, 다시 로그인하면 이전 Refresh Token은 무효가 됩니다.
 
@@ -100,8 +120,8 @@ jwt:
 ### curl 예시
 
 ```bash
-curl -i -H 'Content-Type: application/json' -d '{"email":"a@b.com","password":"pw1234"}' localhost:8080/signup
-curl -i -c cookies.txt -H 'Content-Type: application/json' -d '{"email":"a@b.com","password":"pw1234"}' localhost:8080/login
+curl -i -H 'Content-Type: application/json' -d '{"email":"a@b.com","password":"password1234"}' localhost:8080/signup
+curl -i -c cookies.txt -H 'Content-Type: application/json' -d '{"email":"a@b.com","password":"password1234"}' localhost:8080/login
 curl -i -b cookies.txt -c cookies.txt -X POST localhost:8080/api/token
 curl -i -b cookies.txt -c cookies.txt -X DELETE localhost:8080/api/token   # 로그아웃
 ```
@@ -126,10 +146,6 @@ src/main/java/io/pinkspider/springboot3jwttemplate/global
 ├── repository
 └── service       # TokenService, RefreshTokenService, UserService, UserDetailService
 ```
-
-## TODO
-
-- 요청 값 검증(`spring-boot-starter-validation`): 이메일 형식, 비밀번호 길이 등
 
 ## 라이선스
 

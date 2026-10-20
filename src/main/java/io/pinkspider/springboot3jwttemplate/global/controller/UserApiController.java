@@ -6,6 +6,7 @@ import io.pinkspider.springboot3jwttemplate.global.dto.request.AddUserRequest;
 import io.pinkspider.springboot3jwttemplate.global.dto.request.LoginRequest;
 import io.pinkspider.springboot3jwttemplate.global.service.TokenService;
 import io.pinkspider.springboot3jwttemplate.global.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -26,14 +27,14 @@ public class UserApiController {
     private final AuthenticationManager authenticationManager;
 
     @PostMapping("/signup")
-    public ResponseEntity<Void> signup(@RequestBody AddUserRequest request) {
+    public ResponseEntity<Void> signup(@Valid @RequestBody AddUserRequest request) {
         userService.save(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Void> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken.unauthenticated(request.getEmail(), request.getPassword()));
         User user = (User) authentication.getPrincipal();

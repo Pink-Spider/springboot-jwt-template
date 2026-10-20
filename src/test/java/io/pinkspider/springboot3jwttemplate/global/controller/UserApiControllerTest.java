@@ -25,6 +25,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -85,6 +86,66 @@ class UserApiControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body(EMAIL, PASSWORD)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @DisplayName("signup: 이메일 형식이 아니면 400과 필드 오류를 반환하고 저장하지 않는다.")
+    @Test
+    public void signup_invalidEmail() throws Exception {
+        mockMvc.perform(post("/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body("not-an-email", PASSWORD)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.email").isNotEmpty())
+                .andExpect(jsonPath("$.errors.password").doesNotExist());
+
+        assertThat(userRepository.count()).isZero();
+    }
+
+    @DisplayName("signup: 비밀번호가 8자 미만이거나 72자를 넘으면 400을 반환한다.")
+    @Test
+    public void signup_invalidPasswordLength() throws Exception {
+        for (String password : new String[]{"short", "a".repeat(73)}) {
+            mockMvc.perform(post("/signup")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body(EMAIL, password)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errors.password").isNotEmpty());
+        }
+
+        assertThat(userRepository.count()).isZero();
+    }
+
+    @DisplayName("signup: 필드가 비어 있으면 400을 반환한다.")
+    @Test
+    public void signup_blankFields() throws Exception {
+        mockMvc.perform(post("/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.email").isNotEmpty())
+                .andExpect(jsonPath("$.errors.password").isNotEmpty());
+    }
+
+    @DisplayName("signup: JSON 형식이 잘못되면 400을 반환한다.")
+    @Test
+    public void signup_malformedJson() throws Exception {
+        mockMvc.perform(post("/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("Malformed request body"));
+    }
+
+    @DisplayName("login: 필드가 비어 있으면 인증을 시도하지 않고 400을 반환한다.")
+    @Test
+    public void login_blankFields() throws Exception {
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body("", "")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.email").isNotEmpty())
+                .andExpect(jsonPath("$.errors.password").isNotEmpty())
+                .andExpect(cookie().doesNotExist(TokenCookies.ACCESS_TOKEN));
     }
 
     @DisplayName("login: 로그인하면 access/refresh token 을 HttpOnly 쿠키로 반환하고 refresh token 을 저장한다.")
