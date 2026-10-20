@@ -45,9 +45,10 @@ class TokenProviderTest {
 
         // then
         Long userId = Jwts.parser()
-                .setSigningKey(jwtProperties.getSecretKey())
-                .parseClaimsJws(token)
-                .getBody()
+                .verifyWith(jwtProperties.signingKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
                 .get("id", Long.class);
 
         assertThat(userId).isEqualTo(testUser.getId());

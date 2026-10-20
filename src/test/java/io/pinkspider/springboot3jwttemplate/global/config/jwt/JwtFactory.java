@@ -1,8 +1,6 @@
 package io.pinkspider.springboot3jwttemplate.global.config.jwt;
 
-import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -38,13 +36,13 @@ public class JwtFactory {
 
     public String createToken(JwtProperties jwtProperties) {
         return Jwts.builder()
-                .setSubject(subject)
-                .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
-                .setIssuer(jwtProperties.getIssuer())
-                .setIssuedAt(issuedAt)
-                .setExpiration(expiration)
-                .addClaims(claims)
-                .signWith(SignatureAlgorithm.HS256, jwtProperties.getSecretKey())
+                .subject(subject)
+                .header().type("JWT").and()
+                .issuer(jwtProperties.getIssuer())
+                .issuedAt(issuedAt)
+                .expiration(expiration)
+                .claims(claims)
+                .signWith(jwtProperties.signingKey(), Jwts.SIG.HS256)
                 .compact();
     }
 }

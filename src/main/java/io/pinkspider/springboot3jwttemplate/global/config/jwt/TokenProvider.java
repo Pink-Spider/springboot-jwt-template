@@ -1,9 +1,7 @@
 package io.pinkspider.springboot3jwttemplate.global.config.jwt;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.pinkspider.springboot3jwttemplate.global.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,21 +29,22 @@ public class TokenProvider {
         Date now = new Date();
 
         return Jwts.builder()
-                .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
-                .setIssuer(jwtProperties.getIssuer())
-                .setIssuedAt(now)
-                .setExpiration(expiry)
-                .setSubject(user.getEmail())
+                .header().type("JWT").and()
+                .issuer(jwtProperties.getIssuer())
+                .issuedAt(now)
+                .expiration(expiry)
+                .subject(user.getEmail())
                 .claim("id", user.getId())
-                .signWith(SignatureAlgorithm.HS256, jwtProperties.getSecretKey())
+                .signWith(jwtProperties.signingKey(), Jwts.SIG.HS256)
                 .compact();
     }
 
     public boolean validToken(String token) {
         try {
             Jwts.parser()
-                    .setSigningKey(jwtProperties.getSecretKey())
-                    .parseClaimsJws(token);
+                    .verifyWith(jwtProperties.signingKey())
+                    .build()
+                    .parseSignedClaims(token);
 
             return true;
         } catch (Exception e) {
@@ -69,8 +68,9 @@ public class TokenProvider {
 
     private Claims getClaims(String token) {
         return Jwts.parser()
-                .setSigningKey(jwtProperties.getSecretKey())
-                .parseClaimsJws(token)
-                .getBody();
+                .verifyWith(jwtProperties.signingKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }

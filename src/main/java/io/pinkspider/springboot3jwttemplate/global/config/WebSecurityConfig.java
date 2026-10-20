@@ -1,23 +1,20 @@
 package io.pinkspider.springboot3jwttemplate.global.config;
 
 import io.pinkspider.springboot3jwttemplate.global.service.UserDetailService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-import static org.springframework.boot.autoconfigure.security.servlet.PathRequest.toH2Console;
+import static org.springframework.boot.security.autoconfigure.web.servlet.PathRequest.toH2Console;
 
-@RequiredArgsConstructor
 @Configuration
 public class WebSecurityConfig {
-
-    private final UserDetailService userService;
 
     @Bean
     public WebSecurityCustomizer configure() {
@@ -29,28 +26,25 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                .authorizeRequests()
-                .requestMatchers("/login", "/signup", "/user").permitAll()
-                .anyRequest().authenticated()
-                .and()
-//                .formLogin()
-//                .loginPage("/login")
-//                .defaultSuccessUrl("/articles")
-//                .and()
-//                .logout()
-//                .logoutSuccessUrl("/login")
-//                .invalidateHttpSession(true)
-//                .and()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/login", "/signup", "/user").permitAll()
+                        .anyRequest().authenticated())
+//                .formLogin(formLogin -> formLogin
+//                        .loginPage("/login")
+//                        .defaultSuccessUrl("/articles"))
+//                .logout(logout -> logout
+//                        .logoutSuccessUrl("/login")
+//                        .invalidateHttpSession(true))
                 .build();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http, BCryptPasswordEncoder bCryptPasswordEncoder,
-                                                       UserDetailService userDetailService) throws Exception {
-        return http.getSharedObject(AuthenticationManagerBuilder.class)
-                .userDetailsService(userService)
-                .passwordEncoder(bCryptPasswordEncoder)
-                .and().build();
+    public AuthenticationManager authenticationManager(BCryptPasswordEncoder bCryptPasswordEncoder,
+                                                       UserDetailService userDetailService) {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailService);
+        authProvider.setPasswordEncoder(bCryptPasswordEncoder);
+
+        return new ProviderManager(authProvider);
     }
 
     @Bean
