@@ -25,6 +25,15 @@ public final class TokenCookies {
         return build(REFRESH_TOKEN, token, REFRESH_TOKEN_PATH, maxAge);
     }
 
+    // 로그아웃: 같은 이름·경로로 Max-Age=0 쿠키를 내려 브라우저에서 삭제한다.
+    public static ResponseCookie expireAccessToken() {
+        return build(ACCESS_TOKEN, "", "/", Duration.ZERO);
+    }
+
+    public static ResponseCookie expireRefreshToken() {
+        return build(REFRESH_TOKEN, "", REFRESH_TOKEN_PATH, Duration.ZERO);
+    }
+
     private static ResponseCookie build(String name, String value, String path, Duration maxAge) {
         return ResponseCookie.from(name, value)
                 .httpOnly(true)

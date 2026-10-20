@@ -21,6 +21,8 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -122,5 +124,48 @@ class TokenApiControllerTest {
         mockMvc.perform(post("/api/token")
                         .cookie(new Cookie(TokenCookies.REFRESH_TOKEN, accessToken)))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @DisplayName("logout: refresh token 을 삭제하고 두 쿠키를 만료시킨다.")
+    @Test
+    public void logout() throws Exception {
+        // given
+        User testUser = userRepository.save(User.builder()
+                .email("user@gmail.com")
+                .password("test")
+                .build());
+
+        String refreshToken = JwtFactory.builder()
+                .claims(Map.of("id", testUser.getId()))
+                .tokenType(TokenType.REFRESH)
+                .build()
+                .createToken(jwtProperties);
+
+        refreshTokenRepository.save(new RefreshToken(testUser.getId(), refreshToken));
+
+        // when
+        mockMvc.perform(delete("/api/token")
+                        .cookie(new Cookie(TokenCookies.REFRESH_TOKEN, refreshToken)))
+                .andExpect(status().isNoContent())
+                .andExpect(cookie().maxAge(TokenCookies.ACCESS_TOKEN, 0))
+                .andExpect(cookie().path(TokenCookies.ACCESS_TOKEN, "/"))
+                .andExpect(cookie().maxAge(TokenCookies.REFRESH_TOKEN, 0))
+                .andExpect(cookie().path(TokenCookies.REFRESH_TOKEN, TokenCookies.REFRESH_TOKEN_PATH));
+
+        // then: 삭제된 refresh token 으로는 더 이상 재발급할 수 없다.
+        assertThat(refreshTokenRepository.findByUserId(testUser.getId())).isEmpty();
+
+        mockMvc.perform(post("/api/token")
+                        .cookie(new Cookie(TokenCookies.REFRESH_TOKEN, refreshToken)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @DisplayName("logout: 쿠키가 없어도 204 를 반환하고 쿠키를 만료시킨다.")
+    @Test
+    public void logout_withoutCookie() throws Exception {
+        mockMvc.perform(delete("/api/token"))
+                .andExpect(status().isNoContent())
+                .andExpect(cookie().maxAge(TokenCookies.ACCESS_TOKEN, 0))
+                .andExpect(cookie().maxAge(TokenCookies.REFRESH_TOKEN, 0));
     }
 }

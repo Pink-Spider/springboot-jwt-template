@@ -1,6 +1,6 @@
 # springboot3_jwt_template
 
-Spring Boot 4 기반 JWT 인증 템플릿 프로젝트입니다. 회원가입·로그인과 Access Token / Refresh Token 발급·검증을 HttpOnly 쿠키 기반으로 구현합니다.
+Spring Boot 4 기반 JWT 인증 템플릿 프로젝트입니다. 회원가입·로그인·로그아웃과 Access Token / Refresh Token 발급·검증을 HttpOnly 쿠키 기반으로 구현합니다.
 
 ## 브랜치
 
@@ -88,12 +88,22 @@ jwt:
 - `204 No Content` + `Set-Cookie: access_token=…`
 - `401 Unauthorized`: 쿠키가 없거나, 만료·위조되었거나, 저장된 Refresh Token과 다른 경우
 
+### `DELETE /api/token` — 로그아웃
+
+요청 본문 없이 `refresh_token` 쿠키로 요청합니다. Access Token이 만료된 상태에서도 호출할 수 있습니다.
+
+- `204 No Content` + `Set-Cookie: access_token=; Max-Age=0`, `Set-Cookie: refresh_token=; Max-Age=0`
+- 저장된 Refresh Token을 삭제하므로 이후 재발급이 불가능합니다.
+- 쿠키가 없어도 `204` 를 반환합니다(여러 번 호출해도 안전).
+- 이미 발급된 Access Token은 stateless JWT 특성상 만료(최대 2시간)까지 유효합니다. 브라우저의 쿠키는 삭제됩니다.
+
 ### curl 예시
 
 ```bash
 curl -i -H 'Content-Type: application/json' -d '{"email":"a@b.com","password":"pw1234"}' localhost:8080/signup
 curl -i -c cookies.txt -H 'Content-Type: application/json' -d '{"email":"a@b.com","password":"pw1234"}' localhost:8080/login
 curl -i -b cookies.txt -c cookies.txt -X POST localhost:8080/api/token
+curl -i -b cookies.txt -c cookies.txt -X DELETE localhost:8080/api/token   # 로그아웃
 ```
 
 ## 테스트
@@ -119,7 +129,6 @@ src/main/java/io/pinkspider/springboot3jwttemplate/global
 
 ## TODO
 
-- 로그아웃 API: HttpOnly 쿠키는 클라이언트에서 지울 수 없으므로 서버가 쿠키 만료와 Refresh Token 삭제를 해줘야 합니다.
 - 요청 값 검증(`spring-boot-starter-validation`): 이메일 형식, 비밀번호 길이 등
 
 ## 라이선스

@@ -25,4 +25,9 @@ public class RefreshTokenService {
 
         return refreshTokenRepository.save(entity);
     }
+
+    @Transactional
+    public void delete(String refreshToken) {
+        refreshTokenRepository.deleteByRefreshToken(refreshToken);
+    }
 }

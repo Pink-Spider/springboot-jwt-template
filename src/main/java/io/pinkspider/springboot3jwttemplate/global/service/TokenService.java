@@ -32,6 +32,13 @@ public class TokenService {
         return refreshToken;
     }
 
+    // 로그아웃. 만료·위조 여부와 관계없이 저장된 값과 같으면 삭제한다.
+    public void deleteRefreshToken(String refreshToken) {
+        if (refreshToken != null) {
+            refreshTokenService.delete(refreshToken);
+        }
+    }
+
     public String createNewAccessToken(String refreshToken) {
         // 토큰 유효성 검사에 실패하면 예외 발생
         if(!tokenProvider.validToken(refreshToken, TokenType.REFRESH)) {
